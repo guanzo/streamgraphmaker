@@ -2,9 +2,11 @@
 	<div class="container">
 		<h1>Stream Graph Maker</h1>
 		<file-input @graphData="onGraphData" @error="onError"></file-input>
+		<br>
 		<streamgraph v-if="!hasError" 
 			:graphData="graphData" 
 			:colorScale="colorScale" 
+			:labels="labels"
 			:margin="margin" 
 			:stackOrder="stackOrder"
 			:stackOffset="stackOffset"
@@ -14,6 +16,8 @@
 		<br>
 		<div v-if="!hasError && graphData.length">
 			<h3>Customize</h3>
+			<labels :labels="labels"></labels>
+			<hr>
 			<margins :margin="margin"></margins>
 			<hr>
 			<stack-layout @stackOrder="onStackOrder" @stackOffset="onStackOffset"></stack-layout>
@@ -27,6 +31,7 @@
 
 import FileInput from './components/FileInput.vue'
 import Streamgraph from './components/Streamgraph.vue'
+import Labels from './components/controls/Labels.vue'
 import Margins from './components/controls/Margins.vue'
 import StackLayout from './components/controls/StackLayout.vue'
 import ColorPicker from './components/controls/ColorPicker.vue'
@@ -41,7 +46,12 @@ export default {
 			graphData:[],
 			colorScale: chromatic.interpolateBlues,
 			hasError: false,
-			margin: { top: 20, right: 20, bottom: 40, left: 60 },
+			margin: { top: 30, right: 20, bottom: 60, left: 60 },
+			labels:{
+				title:'',
+				['y axis']:'',
+				['x axis']:''
+			},
 			stackOrder: d3.stackOrderNone,
 			stackOffset: d3.stackOffsetNone
 		}
@@ -67,6 +77,7 @@ export default {
 	components:{
 		Streamgraph,
 		FileInput,
+		Labels,
 		ColorPicker,
 		Margins,
 		StackLayout,

@@ -1,8 +1,13 @@
 
 <template>
-	<div>
-		<label for="file">Upload a csv/tsv file</label>
-		<input ref="fileinput" id="file" type="file" @change="loadFile" accept=".csv, .tsv, .txt" />
+	<div class="file-input">
+		<div>
+			<label for="file">Upload a csv/tsv file</label>
+			<input ref="fileinput" id="file" type="file" @change="loadFile" accept=".csv, .tsv, .txt" />
+		</div>
+		<div>
+			<button @click="onSample">view sample file</button>
+		</div>
 	</div>
 </template>
 
@@ -22,7 +27,7 @@ export default {
 	methods:{
 		loadFile(){
 			this.hasError = false;
-			
+
 			var file = this.$refs.fileinput.files[0];      
 			this.reader.addEventListener("load", this.parseFile, false);
 			if (file) {
@@ -60,12 +65,23 @@ export default {
 				}
 			});
 			return d
+		},
+		onSample(){
+			d3.tsv('/streamgraphmaker/sample-files/sample.tsv',this.parseRow,(error, data)=>{
+				this.$emit('graphData',data)
+			})
 		}
 	}
 }
 
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+
+.file-input{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
 
 </style>

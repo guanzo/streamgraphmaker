@@ -1,15 +1,14 @@
 
 <template>
-	<div>
-		<div class="svg-wrapper">
-			<div ref="legend" class="legend"></div>
-			<svg ref="svg" >
-				<g class="margin-group">
-					<g class="x axis"></g>	
-					<g class="y axis"></g>
-				</g>
-			</svg>
-		</div>
+	<div class="streamgraph">
+		<div v-show="labels.title.length" class="title">{{ labels.title }}</div>
+		<div ref="legend" class="legend"></div>
+		<svg ref="svg" >
+			<g class="margin-group">
+				<g class="x axis"></g>	
+				<g class="y axis"></g>
+			</g>
+		</svg>
 	</div>
 </template>
 
@@ -20,11 +19,13 @@ import _ from 'lodash'
 
 export default {
 	name:'streamgraph',
-	props:['graphData','colorScale','margin', 'stackOrder','stackOffset'],
+	props:['graphData','colorScale','labels','margin', 'stackOrder','stackOffset'],
 	data(){
 		return {
 			transitionDuration: 1000,
-			keys:[]
+			keys:[],
+			xScale: null,
+			yScale: null
 		}
 	},
 	watch:{
@@ -45,12 +46,25 @@ export default {
 		},
 		stackOffset(){
 			this.doDataJoin()
-		}
+		},
+		labels:{
+			handler(){
+				this.doDataJoin()
+			},
+			deep: true
+		},
 	},
 	methods:{
 		doDataJoin(){
 			var data = this.graphData;
 			var margin = this.margin;
+
+			var svg 	= d3.select(this.$refs.svg),
+				bbox 	= svg.node().getBoundingClientRect(),
+				width 	= bbox.width - margin.left - margin.right,
+				height 	= bbox.height - margin.top - margin.bottom;
+
+			svg = svg.select('.margin-group').attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 			var xAxisProp = data.columns[0]
 			var keys = this.keys = data.columns.slice(1)
@@ -62,41 +76,27 @@ export default {
 
 			var series = stack(data);
 
-			var svg 	= d3.select(this.$refs.svg),
-				bbox 	= svg.node().getBoundingClientRect(),
-				width 	= bbox.width - margin.left - margin.right,
-				height 	= bbox.height - margin.top - margin.bottom;
-
-			svg = svg.select('.margin-group').attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-			var xScale = d3.scalePoint()
-				.domain(data.map(d=>d[xAxisProp]))
-				.range([0, width]);
-
-			var yScale = d3.scaleLinear()
-				.domain([d3.min(series, this.stackMin), d3.max(series, this.stackMax)])
-				.range([height, 0]);
+			this.setScales(svg,data,series,width,height,xAxisProp);
 
 			var area = d3.area()
 				.curve(d3.curveCardinal)
-				.x((d, i)=>xScale(d.data[xAxisProp]))
-				.y0(d=>yScale(d[0]))
-				.y1(d=>yScale(d[1]));  
-			
-			svg.select('.x.axis')
-				.attr("transform", "translate(0," + height + ")")
-				.transition().duration(this.transitionDuration)
-				.call(d3.axisBottom(xScale))
+				.x((d, i)=>this.xScale(d.data[xAxisProp]))
+				.y0(d=>this.yScale(d[0]))
+				.y1(d=>this.yScale(d[1])); 
 
-			svg.select('.y.axis')
-				.transition().duration(this.transitionDuration)
-				.call(d3.axisLeft(yScale))
-				
 			let streams = svg.selectAll('path.stream')
 				.data(series,d=>d.key);
+
+			streams.exit()
+				.transition()
+				.duration(this.transitionDuration)
+				.style('opacity',0)
+				.remove();
+
 			streams = streams.enter()
 					.append('path')
 					.attr('class','stream')
+					.style('opacity',0)
 				.merge(streams)
 				.transition()
 				.duration(this.transitionDuration)
@@ -105,14 +105,58 @@ export default {
 						let step = i/keys.length
 						return this.colorScale(step)
 					})
+					.style('opacity',1)
 
-			this.createLegend(series)
+			this.setLegend(series)
 		},
-		createLegend(series){
+		setScales(svg, data, series, width, height, xAxisProp){
+			
+			this.xScale = d3.scalePoint()
+				.domain(data.map(d=>d[xAxisProp]))
+				.range([0, width]);
+
+			this.yScale = d3.scaleLinear()
+				.domain([d3.min(series, this.stackMin), d3.max(series, this.stackMax)])
+				.range([height, 0]);
+ 
+			
+			svg.select('.x.axis')
+				.attr("transform", "translate(0," + height + ")")
+				.transition().duration(this.transitionDuration)
+				.call(d3.axisBottom(this.xScale))
+
+			let xLabel = svg.select('.x.axis').selectAll('.label')
+				.data([this.labels['x axis']]);
+
+			xLabel = xLabel.enter().append('text')
+				.merge(xLabel)
+				.attr('class','label')
+				.attr("transform", "translate("+ (width/2) +",0)")
+				.attr('y',30)
+				.text(d=>d) 
+
+			svg.select('.y.axis')
+				.transition().duration(this.transitionDuration)
+				.call(d3.axisLeft(this.yScale))
+			
+			let yLabel = svg.select('.y.axis').selectAll('.label')
+				.data([this.labels['y axis']]);
+
+			yLabel = yLabel.enter().append('text')
+				.merge(yLabel)
+				.attr('class','label')
+				.attr('text-anchor','middle')
+				.attr('y',-10) 
+				.text(d=>d) 
+		},
+		setLegend(series){
 			var legend = d3.select(this.$refs.legend)
-			console.log(series)
+
 			var legendUpdate = legend.selectAll('.legend-item')
 					.data(series,d=>d.key);
+
+			legendUpdate.exit().remove()
+
 			var legendEnter = legendUpdate.enter().append('div')
 					.attr('class','legend-item')
 			
@@ -146,14 +190,29 @@ export default {
 $width: 960px;
 $height: 500px;
 
-.svg-wrapper{
+.streamgraph{
 	position: relative;
+	width: $width;
+	height: $height;
+	.title{
+		font-size: 1.2em;
+		position: absolute;
+		left: 50%;
+		top: 5px;
+		transform: translateX(-50%);
+	}
 }
 
 svg {
 	border: 1px solid #eee;
 	width: $width;
 	height: $height;
+}
+
+.axis .label{
+	fill: #333;
+	font-size: 14px;
+	text-anchor: middle;
 }
 
 .legend{
