@@ -132,6 +132,7 @@ export default {
 				.merge(xLabel)
 				.attr('class','label')
 				.attr("transform", "translate("+ (width/2) +",0)")
+                .attr('rotate','45deg')
 				.attr('y',30)
 				.text(d=>d) 
 
@@ -209,10 +210,16 @@ svg {
 	height: $height;
 }
 
-.axis .label{
-	fill: #333;
-	font-size: 14px;
-	text-anchor: middle;
+.axis {
+    &.x.tilted .tick text{
+        transform: rotate(-45deg);
+        text-anchor: end;    
+    }
+    .label{
+        fill: #333;
+        font-size: 14px;
+        text-anchor: middle;
+    }
 }
 
 .legend{
@@ -230,6 +237,7 @@ svg {
 .color-square{
 	width:14px;
 	height:14px;
+    flex: none;
 	margin-right:5px;
 }
 </style>
