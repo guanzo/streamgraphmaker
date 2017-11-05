@@ -46,7 +46,7 @@ export default {
 				data = d3.tsvParse(this.reader.result,this.parseRow);
 			}else
                 this.hasError = true;
-                
+
 			if(!this.hasError)
 				this.$emit('graphData',data)
 			else
@@ -69,7 +69,7 @@ export default {
 			return d
 		},
 		onSample(){
-			d3.tsv('/streamgraphmaker/sample-files/sample.tsv',this.parseRow,(error, data)=>{
+			d3.tsv('/sample-files/sample.tsv',this.parseRow,(error, data)=>{
 				this.$emit('graphData',data)
 			})
 		}
