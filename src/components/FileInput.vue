@@ -44,7 +44,9 @@ export default {
 			}
 			else if( fileType == 'tsv'){
 				data = d3.tsvParse(this.reader.result,this.parseRow);
-			}
+			}else
+                this.hasError = true;
+                
 			if(!this.hasError)
 				this.$emit('graphData',data)
 			else

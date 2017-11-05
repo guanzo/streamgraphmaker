@@ -1,7 +1,7 @@
 
 <template>
 	<div class="streamgraph">
-		<div v-show="labels.title.length" class="title">{{ labels.title }}</div>
+		<div v-show=" graphOptions.labels.title.length" class="title">{{ graphOptions.labels.title }}</div>
 		<div ref="legend" class="legend"></div>
 		<svg ref="svg" >
 			<g class="margin-group">
@@ -19,7 +19,7 @@ import _ from 'lodash'
 
 export default {
 	name:'streamgraph',
-	props:['graphData','colorScale','labels','margin', 'stackOrder','stackOffset'],
+	props:['graphData','graphOptions'],
 	data(){
 		return {
 			transitionDuration: 1000,
@@ -29,25 +29,7 @@ export default {
 		}
 	},
 	watch:{
-		graphData(){
-			this.doDataJoin();
-		},
-		colorScale(){
-			this.doDataJoin();
-		},
-		margin:{
-			handler(){
-				this.doDataJoin()
-			},
-			deep: true
-		},
-		stackOrder(){
-			this.doDataJoin()
-		},
-		stackOffset(){
-			this.doDataJoin()
-		},
-		labels:{
+		graphOptions:{
 			handler(){
 				this.doDataJoin()
 			},
@@ -57,7 +39,7 @@ export default {
 	methods:{
 		doDataJoin(){
 			var data = this.graphData;
-			var margin = this.margin;
+			var margin = this.graphOptions.margin;
 
 			var svg 	= d3.select(this.$refs.svg),
 				bbox 	= svg.node().getBoundingClientRect(),
@@ -71,8 +53,8 @@ export default {
 			
 			var stack = d3.stack()
 				.keys(keys)
-				.order(this.stackOrder)
-				.offset(this.stackOffset);
+				.order(this.graphOptions.stackOrder)
+				.offset(this.graphOptions.stackOffset);
 
 			var series = stack(data);
 
@@ -103,7 +85,7 @@ export default {
 					.attr('d',area)
 					.attr('fill',(d,i)=>{
 						let step = i/keys.length
-						return this.colorScale(step)
+						return this.graphOptions.colorScale(step)
 					})
 					.style('opacity',1)
 
@@ -126,13 +108,13 @@ export default {
 				.call(d3.axisBottom(this.xScale))
 
 			let xLabel = svg.select('.x.axis').selectAll('.label')
-				.data([this.labels['x axis']]);
+				.data([this.graphOptions.labels['x axis']]);
 
 			xLabel = xLabel.enter().append('text')
 				.merge(xLabel)
 				.attr('class','label')
 				.attr("transform", "translate("+ (width/2) +",0)")
-                .attr('rotate','45deg')
+                //.attr('rotate','45')
 				.attr('y',30)
 				.text(d=>d) 
 
@@ -141,7 +123,7 @@ export default {
 				.call(d3.axisLeft(this.yScale))
 			
 			let yLabel = svg.select('.y.axis').selectAll('.label')
-				.data([this.labels['y axis']]);
+				.data([this.graphOptions.labels['y axis']]);
 
 			yLabel = yLabel.enter().append('text')
 				.merge(yLabel)
@@ -172,7 +154,7 @@ export default {
 				.duration(this.transitionDuration)
 				.style('background',(d,i)=>{
 					let step = (1 - i/this.keys.length)
-					return this.colorScale(step)
+					return this.graphOptions.colorScale(step)
 				})
 		},
 		stackMax(layer) {
@@ -181,7 +163,11 @@ export default {
 		stackMin(layer) {
 			return d3.min(layer,d=>d[0]);
 		}
-	}
+	},
+    mounted(){
+        if(this.graphData.length)
+            this.doDataJoin()
+    }
 }
 
 </script>
@@ -233,6 +219,7 @@ svg {
 	margin-bottom:4px;
 	display: flex;
 	align-items: center;
+    white-space: nowrap;
 }
 .color-square{
 	width:14px;

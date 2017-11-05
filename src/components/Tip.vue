@@ -1,10 +1,11 @@
 
 <template>
-	<div class="error">
+	<div class="tip">
+        <div v-if="hasError" class="error">There was an error with the uploaded file.</div>
 		<div>
-			There was an error with the uploaded file.<br><br>
 			The file format should follow the below table.<br>
-			The x axis category is the first column.<br>
+			The x axis is derived from the first column,<br>
+            Its value can be numeric/categorical.<br>
 			All subsequent category values should be numeric.
 		</div>
 		<table>
@@ -48,6 +49,7 @@ import _ from 'lodash'
 
 export default {
 	name:'error',
+    props:['hasError']
 }
 
 </script>
@@ -57,7 +59,7 @@ export default {
 $width: 960px;
 $height: 500px;
 
-.error {
+.tip {
 	border: 1px solid #eee;
 	width: $width;
 	height: $height;
@@ -67,8 +69,10 @@ $height: 500px;
 	align-items: center;
 	justify-content: center;
 	text-align: center;
-	> div{
-		margin-bottom: 20px;
+	> div.error{
+        font-weight: bold;
+        color: #E53935;
+        margin-bottom: 20px;
 	}
 }
 
