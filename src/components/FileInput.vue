@@ -57,7 +57,7 @@ export default {
 				var value = d[key]
 				var number;
 				try{
-					number = parseFloat(value.replace(/,/g,''))
+                    number = parseFloat(value.replace(/,/g,''))
 					if(!isNaN(number))
 						d[key] = number;
 				}catch(e){
@@ -65,7 +65,7 @@ export default {
 					this.hasError = true;
 					number = value;
 				}
-			});
+            });
 			return d
 		},
 		onSample(){
